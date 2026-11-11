@@ -135,8 +135,8 @@ function clubCompleto() {
   });
 
   const reunion = reuniones.crear(direccion, plan.id, {
-    inicio: `${sumarDias(hoy(), -12)}T18:00`,
-    fin: `${sumarDias(hoy(), -12)}T19:30`,
+    fecha: sumarDias(hoy(), -12),
+    hora: '18:00',
     lugar: 'Sede del club (ficticia)',
     modalidad: 'En el club',
     director1_id: direccion.id,
@@ -218,10 +218,10 @@ function clubEnSeguimiento() {
   });
 
   const reunion = reuniones.crear(equipo.direccion2, plan.id, {
-    inicio: `${sumarDias(hoy(), -8)}T10:00`,
-    fin: `${sumarDias(hoy(), -8)}T11:00`,
+    fecha: sumarDias(hoy(), -8),
+    hora: '10:00',
     lugar: null,
-    modalidad: 'Videollamada',
+    modalidad: 'Llamada',
     director1_id: equipo.direccion2.id,
     director2_id: direccion.id,
     acta_responsable_id: equipo.ayudante.id,
@@ -284,8 +284,8 @@ function clubConActaEnRevision() {
   planes.agregarDisciplina(direccion, plan.id, { disciplina: 'Formativas', tiras_base: '0', tiras_propuestas: '1' });
 
   const reunion = reuniones.crear(direccion, plan.id, {
-    inicio: `${sumarDias(hoy(), -2)}T19:00`,
-    fin: `${sumarDias(hoy(), -2)}T20:00`,
+    fecha: sumarDias(hoy(), -2),
+    hora: '19:00',
     lugar: 'Sede del club (ficticia)',
     modalidad: 'En el club',
     director1_id: direccion.id,
