@@ -28,6 +28,7 @@ const { registrarConflicto } = await import('../server/dominio/conflictos.js');
 const accesos = await import('../server/dominio/accesos.js');
 const disponibilidad = await import('../server/dominio/disponibilidad.js');
 const tunel = await import('../server/lib/tunel.js');
+const entrega = await import('../server/lib/entrega.js');
 
 abrirBase();
 
@@ -1974,6 +1975,23 @@ ok(
   'Ni sin decir dónde escuchar: en modo público eso sería todas',
   tunel.problemasDelTunel({ ...entornoTunel, FUTSALA_INTERFAZ: '' }).some((p) => p.includes('INTERFAZ')),
 );
+
+seccion('22. La pantalla de acceso dice dónde aparece el enlace');
+
+ok('En esta máquina sola, la pantalla lo sabe', entrega.soloEnEstaMaquina({}) === true);
+ok('Abierta a la red local, no', entrega.soloEnEstaMaquina({ FUTSALA_RED: '1' }) === false);
+ok('Publicada en un servidor, no', entrega.soloEnEstaMaquina({ FUTSALA_PUBLICO: '1' }) === false);
+ok(
+  'Publicada con túnel tampoco, aunque escuche en 127.0.0.1',
+  entrega.soloEnEstaMaquina({ FUTSALA_PUBLICO: '1', FUTSALA_INTERFAZ: '127.0.0.1' }) === false,
+);
+ok(
+  'En esta máquina dice que el enlace aparece en la ventana de la aplicación',
+  /ventana donde corre/.test(entrega.comoLlega({})) && entrega.comoLlega({}).includes(entrega.REGISTRO),
+);
+ok('En esta máquina no manda a esperar a Dirección', !/Dirección te lo pasa/.test(entrega.comoLlega({})));
+ok('Publicada, Dirección sigue siendo quien lo pasa', /Dirección te lo pasa/.test(entrega.comoLlega({ FUTSALA_PUBLICO: '1' })));
+ok('Publicada, no muestra dónde está el registro', !entrega.comoLlega({ FUTSALA_PUBLICO: '1' }).includes(entrega.REGISTRO));
 
 // --- Cierre -----------------------------------------------------------------
 

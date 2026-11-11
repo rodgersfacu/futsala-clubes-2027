@@ -202,7 +202,10 @@ export function sesion({ usuario, csrf, avisos, datos }) {
       titulo: 'Si no podés entrar',
       cuerpo: html`
         <ul>
-          <li>Pedile el enlace a Dirección: lo genera desde Administración.</li>
+          ${datos.local
+            ? html`<li>En esta máquina lo generás vos: <code>npm run acceso tu@correo</code> en la
+                carpeta de la aplicación.</li>`
+            : html`<li>Pedile el enlace a Dirección: lo genera desde Administración.</li>`}
           <li>Si el enlace venció o ya lo usaste, pedí uno nuevo: no se reciclan.</li>
           <li>Si tu usuario está inactivo, la aplicación no te deja entrar aunque tengas enlace.</li>
         </ul>`,

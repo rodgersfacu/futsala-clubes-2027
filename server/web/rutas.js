@@ -143,7 +143,11 @@ function verSesion(ctx) {
   return {
     html: varias.sesion({
       ...ctx,
-      datos: { minutos: accesos.MINUTOS_VALIDO, comoLlega: entrega.comoLlega() },
+      datos: {
+        minutos: accesos.MINUTOS_VALIDO,
+        comoLlega: entrega.comoLlega(),
+        local: entrega.soloEnEstaMaquina(),
+      },
     }),
   };
 }
