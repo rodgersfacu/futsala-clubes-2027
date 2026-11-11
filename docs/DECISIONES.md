@@ -186,6 +186,28 @@ vencimientos, pendientes de reconfirmación y cierre de ventana el 01/03/2027) e
 diseñados pero no implementados: antes de activarlos hacen falta destinatarios reales,
 deduplicación y trazabilidad de cada envío.
 
+## Dónde corre
+
+Decidido el 11/11/2026: **Cloudflare Tunnel desde una máquina de FUTSALA que queda
+prendida** (camino A de `DESPLIEGUE.md`), en vez de un servidor pago.
+
+- Es gratis, usa el dominio que ya está en Cloudflare y no abre puertos.
+- La base no se muda: sigue donde está, y el respaldo diario sigue siendo local a ella.
+  Por eso el pendiente "rehacer el respaldo contra el servidor" desaparece: alcanza con
+  registrar la tarea en esa máquina (`scripts/instalar-tareas.ps1`).
+- **La aplicación escucha solo en 127.0.0.1** (`FUTSALA_INTERFAZ`). En modo público se le
+  cree a las cabeceras del proxy; si la red local pudiera hablarle directo, cualquiera
+  ahí podría inventarlas. `npm run tunel` no arranca de otra forma. En Docker es al
+  revés (el proxy está en otra máquina), por eso es un parámetro y no un cambio del modo
+  público.
+- **La configuración vive en `.env`** y solo la leen `npm run tunel` y `npm run acceso`.
+  `npm start` no la lee a propósito: en una máquina de desarrollo con un `.env` olvidado,
+  arrancar en modo público sin pedirlo sería una sorpresa.
+- **El reintento si se cae va en un `.cmd`, no en el Programador de tareas**: Windows
+  reintenta una tarea que no arranca, no un programa que termina con error.
+- Cloudflare Access (código por correo para entrar) queda sin activar hasta que Facundo
+  lo autorice: es un mensaje que le llega a alguien, aunque no lo mande la aplicación.
+
 ## Lo que no se hizo a propósito
 
 - Cobros, jugadores, torneos y administración deportiva: fuera de alcance.
@@ -196,8 +218,9 @@ deduplicación y trazabilidad de cada envío.
 
 ## Riesgos conocidos
 
-- **La autenticación es de demostración.** Cualquiera con acceso a la URL puede elegir una
-  identidad. No exponer la aplicación fuera de una máquina local hasta resolverlo.
+- **La aplicación depende de una sola máquina.** Publicada con Cloudflare Tunnel, si esa
+  máquina se apaga o se suspende, nadie entra hasta que vuelva. Los datos no se pierden
+  (respaldo diario verificado), pero no hay una segunda máquina que la reemplace.
 - SQLite con un solo proceso alcanza para un equipo de esta escala, pero no está pensado
   para muchos servidores en paralelo.
 - Las evidencias son enlaces: los permisos del archivo enlazado dependen de dónde esté

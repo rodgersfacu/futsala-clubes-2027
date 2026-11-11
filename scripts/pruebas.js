@@ -27,6 +27,7 @@ const { registrar } = await import('../server/dominio/registro.js');
 const { registrarConflicto } = await import('../server/dominio/conflictos.js');
 const accesos = await import('../server/dominio/accesos.js');
 const disponibilidad = await import('../server/dominio/disponibilidad.js');
+const tunel = await import('../server/lib/tunel.js');
 
 abrirBase();
 
@@ -1923,6 +1924,55 @@ rechaza(
   'Tampoco una prioridad vacía',
   () => ejecutar(`UPDATE club SET prioridad = '' WHERE id = ?`, clubPrio.id),
   'CHECK|constraint',
+);
+
+seccion('21. Publicar con Cloudflare Tunnel desde una máquina propia');
+
+ok('Sin nada, escucha solo en esta máquina', tunel.interfazDe({}) === '127.0.0.1');
+ok('En modo público sin más, escucha en todas (Docker)', tunel.interfazDe({ FUTSALA_PUBLICO: '1' }) === '0.0.0.0');
+ok(
+  'En modo público con túnel, escucha solo en esta máquina',
+  tunel.interfazDe({ FUTSALA_PUBLICO: '1', FUTSALA_INTERFAZ: '127.0.0.1' }) === '127.0.0.1',
+);
+
+ok('El dominio solo se completa con https', tunel.direccionPublica('reuniones.ejemplo.com.ar') === 'https://reuniones.ejemplo.com.ar');
+ok('La barra final se descarta', tunel.direccionPublica('https://reuniones.ejemplo.com.ar/') === 'https://reuniones.ejemplo.com.ar');
+ok('Por http no sirve: el enlace de acceso viajaría sin cifrar', tunel.direccionPublica('http://reuniones.ejemplo.com.ar') === null);
+ok('Con una ruta no sirve', tunel.direccionPublica('https://ejemplo.com.ar/reuniones') === null);
+ok('localhost no es una dirección pública', tunel.direccionPublica('https://localhost') === null);
+ok('Una IP suelta tampoco', tunel.direccionPublica('https://192.168.0.10') === null);
+ok('Vacío tampoco', tunel.direccionPublica('') === null);
+
+const entornoTunel = {
+  FUTSALA_PUBLICO: '1',
+  FUTSALA_PROXY: '1',
+  FUTSALA_INTERFAZ: '127.0.0.1',
+  FUTSALA_BASE_URL: 'https://reuniones.ejemplo.com.ar',
+  FUTSALA_SECRETO: 'x'.repeat(64),
+};
+ok('La configuración completa del túnel no tiene problemas', tunel.problemasDelTunel(entornoTunel).length === 0);
+for (const [quitar, tema] of [
+  ['FUTSALA_PUBLICO', 'PUBLICO'],
+  ['FUTSALA_PROXY', 'PROXY'],
+  ['FUTSALA_SECRETO', 'SECRETO'],
+  ['FUTSALA_BASE_URL', 'BASE_URL'],
+]) {
+  const sin = { ...entornoTunel };
+  delete sin[quitar];
+  const problemas = tunel.problemasDelTunel(sin);
+  ok(`Sin ${quitar} no arranca, y dice qué falta`, problemas.length === 1 && problemas[0].includes(tema));
+}
+ok(
+  'Un secreto corto no alcanza',
+  tunel.problemasDelTunel({ ...entornoTunel, FUTSALA_SECRETO: 'corto' }).some((p) => p.includes('SECRETO')),
+);
+ok(
+  'Escuchando en todas las interfaces no arranca detrás del túnel',
+  tunel.problemasDelTunel({ ...entornoTunel, FUTSALA_INTERFAZ: '0.0.0.0' }).some((p) => p.includes('INTERFAZ')),
+);
+ok(
+  'Ni sin decir dónde escuchar: en modo público eso sería todas',
+  tunel.problemasDelTunel({ ...entornoTunel, FUTSALA_INTERFAZ: '' }).some((p) => p.includes('INTERFAZ')),
 );
 
 // --- Cierre -----------------------------------------------------------------
