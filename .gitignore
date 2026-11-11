@@ -1,0 +1,30 @@
+# --- Datos reales: nada de esto va al repositorio --------------------------
+# La base tiene los 245 clubes de la liga y el historial completo.
+data/
+*.db
+*.db-wal
+*.db-shm
+*.db.respaldo-*
+
+# Respaldos, exportaciones y planillas: mismos datos, otro formato.
+exportaciones/
+*.xlsx
+*.csv
+
+# Nombres y correos de personas reales. equipo.ejemplo.json sí se versiona.
+equipo.json
+
+# --- Secretos ---------------------------------------------------------------
+.env
+secreto-sesion.txt
+enlaces-de-acceso.log
+
+# --- De cada instalación ----------------------------------------------------
+# Dónde quedó la base en esta máquina.
+datos.ubicacion
+
+# --- Varios -----------------------------------------------------------------
+node_modules/
+*.zip
+Thumbs.db
+.DS_Store

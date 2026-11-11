@@ -1,0 +1,516 @@
+/* Identidad FUTSALA: azules y celestes, sobre el logo de la marca.
+   Tipografía del sistema para que cargue sin depender de terceros. */
+:root {
+  --tinta: #0d1b33;
+  --tinta-suave: #41536f;
+  --tinta-tenue: #6b7d99;
+  --fondo: #f2f5fa;
+  --superficie: #ffffff;
+  --superficie-2: #e9eef7;
+  --borde: #d3dcea;
+  --acento: #1b57c4;
+  --acento-oscuro: #14408f;
+  --acento-tenue: #e7effc;
+  --celeste: #0ea5e9;
+  --celeste-tenue: #e0f2fe;
+  --barra: #0d1b33;
+  --exito: #0f766e;
+  --exito-tenue: #ddf2ef;
+  --aviso: #9a6400;
+  --aviso-tenue: #fdf2dd;
+  --alerta: #b3261e;
+  --alerta-tenue: #fdeceb;
+  --info: #0369a1;
+  --info-tenue: #e0f2fe;
+  --radio: 12px;
+  --radio-chico: 8px;
+  --sombra: 0 1px 2px rgba(13, 27, 51, .06), 0 8px 24px rgba(13, 27, 51, .07);
+  --fuente: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tinta: #e6ecf6;
+    --tinta-suave: #b0bed4;
+    --tinta-tenue: #8a9bb5;
+    --fondo: #081120;
+    --superficie: #111c30;
+    --superficie-2: #19253c;
+    --borde: #26344c;
+    --acento: #5c9bff;
+    --acento-oscuro: #7cb0ff;
+    --acento-tenue: #15233d;
+    --celeste: #56c7f5;
+    --celeste-tenue: #0e2a3c;
+    --barra: #0a1526;
+    --exito: #4fc0a1;
+    --exito-tenue: #10302b;
+    --aviso: #e0ad53;
+    --aviso-tenue: #33280f;
+    --alerta: #f08279;
+    --alerta-tenue: #35191a;
+    --info: #7dd3fc;
+    --info-tenue: #0e2a3c;
+    --sombra: 0 1px 2px rgba(0, 0, 0, .35), 0 8px 24px rgba(0, 0, 0, .3);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--fuente);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--tinta);
+  background: var(--fondo);
+  -webkit-text-size-adjust: 100%;
+}
+
+h1, h2, h3 { line-height: 1.25; margin: 0; font-weight: 650; letter-spacing: -.01em; }
+h1 { font-size: 1.5rem; }
+h2 { font-size: 1.05rem; }
+h3 { font-size: .95rem; }
+p { margin: 0 0 .6rem; }
+p:last-child { margin-bottom: 0; }
+a { color: var(--acento-oscuro); text-decoration-color: color-mix(in srgb, var(--acento) 40%, transparent); }
+a:hover { text-decoration-thickness: 2px; }
+
+.salto {
+  position: absolute; left: -9999px; top: 0; background: var(--acento); color: #fff;
+  padding: .5rem .75rem; z-index: 50;
+}
+.salto:focus { left: .5rem; top: .5rem; }
+
+/* --- Encabezado ----------------------------------------------------------- */
+/* Barra azul profunda: el logo de FUTSALA es blanco y necesita fondo oscuro. */
+.encabezado {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 1rem;
+  padding: .5rem 1rem;
+  background: var(--barra);
+  color: #fff;
+  border-bottom: 1px solid color-mix(in srgb, #ffffff 12%, transparent);
+}
+.encabezado__marca { text-decoration: none; color: inherit; }
+.marca { display: flex; align-items: center; gap: .6rem; }
+.marca__logo { height: 44px; width: auto; flex: none; display: block; }
+.marca__texto { display: flex; flex-direction: column; line-height: 1.05; }
+.marca__texto small {
+  font-size: .72rem; letter-spacing: .09em; text-transform: uppercase; white-space: nowrap;
+  color: color-mix(in srgb, #ffffff 72%, transparent);
+}
+.encabezado__ciclo {
+  font-size: .78rem; margin-left: auto; display: none;
+  color: color-mix(in srgb, #ffffff 68%, transparent);
+}
+.encabezado__usuario {
+  display: flex; align-items: center; gap: .5rem; margin-left: auto;
+  min-width: 0; flex-wrap: nowrap;
+}
+.usuario { display: flex; align-items: center; gap: .4rem; font-size: .85rem; min-width: 0; }
+/* Un nombre largo se recorta en lugar de estirar la barra en teléfono. */
+.usuario__nombre {
+  font-weight: 600; max-width: 7.5rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.en-linea { display: inline; }
+
+@media (min-width: 700px) { .usuario__nombre { max-width: 18rem; } }
+@media (max-width: 420px) { .usuario .chip { display: none; } }
+
+/* Las etiquetas y el botón de salir viven sobre la barra oscura. */
+.encabezado .chip {
+  background: color-mix(in srgb, #ffffff 16%, transparent);
+  border-color: color-mix(in srgb, #ffffff 28%, transparent);
+  color: #fff;
+}
+.encabezado .boton--texto { color: color-mix(in srgb, #ffffff 82%, transparent); }
+.encabezado .boton--texto:hover { background: color-mix(in srgb, #ffffff 14%, transparent); color: #fff; }
+.encabezado a:focus-visible, .encabezado button:focus-visible { outline-color: #fff; }
+
+@media (min-width: 900px) {
+  .encabezado__ciclo { display: block; }
+  .encabezado__usuario { margin-left: 0; }
+}
+
+/* --- Disposición ---------------------------------------------------------- */
+.disposicion { display: block; }
+.lateral { display: none; }
+
+.principal {
+  padding: 1rem 1rem 5.5rem;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.principal--ancho { max-width: 1400px; }
+
+@media (min-width: 900px) {
+  .disposicion {
+    display: grid;
+    grid-template-columns: 232px minmax(0, 1fr);
+    align-items: start;
+    gap: 0;
+  }
+  .lateral {
+    display: block;
+    position: sticky; top: 57px;
+    padding: 1.1rem .75rem;
+    height: calc(100vh - 57px);
+    overflow-y: auto;
+    border-right: 1px solid var(--borde);
+    background: var(--superficie);
+  }
+  .principal { padding: 1.4rem 1.6rem 3rem; margin: 0; }
+}
+
+.lateral__lista { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: 2px; }
+.lateral__enlace {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .5rem .7rem; border-radius: var(--radio-chico);
+  color: var(--tinta-suave); text-decoration: none; font-size: .92rem; font-weight: 500;
+}
+.lateral__enlace:hover { background: var(--superficie-2); color: var(--tinta); }
+.lateral__enlace.es-activa { background: var(--acento-tenue); color: var(--acento-oscuro); font-weight: 650; }
+.lateral__icono { width: 1.1em; text-align: center; opacity: .8; }
+.lateral__titulo {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--tinta-tenue); margin: .4rem .7rem .3rem;
+}
+.lateral__lista--secundaria .lateral__enlace { font-size: .86rem; padding: .4rem .7rem; }
+.lateral__nota {
+  margin: 1.2rem .7rem 0; font-size: .74rem; color: var(--tinta-tenue);
+  border-top: 1px solid var(--borde); padding-top: .7rem;
+}
+
+.barra-inferior {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 25;
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  background: var(--superficie); border-top: 1px solid var(--borde);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.barra-inferior__enlace {
+  display: grid; justify-items: center; gap: 1px; padding: .45rem .2rem .5rem;
+  color: var(--tinta-tenue); text-decoration: none; font-size: 1rem;
+}
+.barra-inferior__enlace small { font-size: .66rem; }
+.barra-inferior__enlace.es-activa { color: var(--acento-oscuro); font-weight: 650; }
+@media (min-width: 900px) { .barra-inferior { display: none; } }
+
+/* --- Títulos y franjas ---------------------------------------------------- */
+.titulo-pagina {
+  display: flex; flex-wrap: wrap; gap: .75rem; align-items: flex-start;
+  justify-content: space-between; margin-bottom: 1rem;
+}
+.titulo-pagina__subtitulo { color: var(--tinta-tenue); font-size: .9rem; margin: .25rem 0 0; }
+.titulo-pagina__acciones { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+.franja {
+  display: grid; gap: .15rem;
+  padding: .7rem .9rem; border-radius: var(--radio-chico);
+  border: 1px solid var(--borde); background: var(--superficie-2);
+  margin-bottom: .9rem; font-size: .9rem;
+}
+.franja small { color: var(--tinta-tenue); }
+.franja--exito { background: var(--exito-tenue); border-color: color-mix(in srgb, var(--exito) 35%, transparent); }
+.franja--alerta { background: var(--alerta-tenue); border-color: color-mix(in srgb, var(--alerta) 35%, transparent); }
+.franja--aviso { background: var(--aviso-tenue); border-color: color-mix(in srgb, var(--aviso) 35%, transparent); }
+.franja--info { background: var(--info-tenue); border-color: color-mix(in srgb, var(--info) 30%, transparent); }
+
+/* --- Tarjetas ------------------------------------------------------------- */
+.tarjeta {
+  background: var(--superficie); border: 1px solid var(--borde);
+  border-radius: var(--radio); box-shadow: var(--sombra);
+  margin-bottom: 1rem; overflow: hidden;
+}
+.tarjeta__cabecera {
+  display: flex; flex-wrap: wrap; gap: .5rem; align-items: flex-start; justify-content: space-between;
+  padding: .85rem 1rem; border-bottom: 1px solid var(--borde);
+  background: color-mix(in srgb, var(--superficie-2) 60%, var(--superficie));
+}
+.tarjeta__subtitulo { font-size: .82rem; color: var(--tinta-tenue); margin: .2rem 0 0; }
+.tarjeta__acciones { display: flex; flex-wrap: wrap; gap: .4rem; }
+.tarjeta__cuerpo { padding: 1rem; }
+.tarjeta--acento { border-color: color-mix(in srgb, var(--acento) 45%, transparent); }
+
+.rejilla { display: grid; gap: 1rem; }
+@media (min-width: 760px) {
+  .rejilla--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rejilla--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* --- Indicadores ---------------------------------------------------------- */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .7rem; }
+.kpi {
+  display: grid; gap: .1rem; padding: .8rem .9rem;
+  background: var(--superficie); border: 1px solid var(--borde);
+  border-radius: var(--radio); text-decoration: none; color: inherit;
+}
+.kpi:hover { border-color: var(--acento); }
+.kpi__valor { font-size: 1.7rem; font-weight: 700; letter-spacing: -.02em; }
+.kpi__titulo { font-size: .8rem; color: var(--tinta-suave); font-weight: 600; }
+.kpi__ayuda { font-size: .72rem; color: var(--tinta-tenue); }
+.kpi--alerta .kpi__valor { color: var(--alerta); }
+.kpi--aviso .kpi__valor { color: var(--aviso); }
+.kpi--exito .kpi__valor { color: var(--exito); }
+
+/* --- Chips y estados ------------------------------------------------------ */
+.chip {
+  display: inline-flex; align-items: center; gap: .25rem;
+  padding: .1rem .5rem; border-radius: 999px;
+  font-size: .74rem; font-weight: 650; white-space: nowrap;
+  border: 1px solid transparent;
+}
+.chip--neutro { background: var(--superficie-2); color: var(--tinta-suave); border-color: var(--borde); }
+.chip--info { background: var(--info-tenue); color: var(--info); border-color: color-mix(in srgb, var(--info) 30%, transparent); }
+.chip--exito { background: var(--exito-tenue); color: var(--exito); border-color: color-mix(in srgb, var(--exito) 30%, transparent); }
+.chip--aviso { background: var(--aviso-tenue); color: var(--aviso); border-color: color-mix(in srgb, var(--aviso) 35%, transparent); }
+.chip--alerta { background: var(--alerta-tenue); color: var(--alerta); border-color: color-mix(in srgb, var(--alerta) 35%, transparent); }
+
+/* --- Datos ---------------------------------------------------------------- */
+.datos { display: grid; gap: .8rem; margin: 0; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.dato dt { font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; color: var(--tinta-tenue); }
+.dato dd { margin: .15rem 0 0; font-size: .95rem; }
+.dato__ayuda { font-size: .74rem; color: var(--tinta-tenue); margin: .2rem 0 0; }
+.sin-dato { color: var(--tinta-tenue); font-style: italic; font-size: .88em; }
+.numero { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+.vacio {
+  padding: 1.2rem; text-align: center; color: var(--tinta-tenue);
+  border: 1px dashed var(--borde); border-radius: var(--radio-chico); background: var(--superficie-2);
+}
+.vacio__ayuda { font-size: .82rem; margin-top: .3rem; }
+
+.aviso { padding: .7rem .85rem; border-radius: var(--radio-chico); font-size: .87rem; margin-bottom: .8rem; border: 1px solid var(--borde); }
+.aviso:last-child { margin-bottom: 0; }
+.aviso ul { margin: .35rem 0 0; padding-left: 1.1rem; }
+.aviso li { margin-bottom: .2rem; }
+.aviso--info { background: var(--info-tenue); border-color: color-mix(in srgb, var(--info) 25%, transparent); }
+.aviso--aviso { background: var(--aviso-tenue); border-color: color-mix(in srgb, var(--aviso) 30%, transparent); }
+.aviso--alerta { background: var(--alerta-tenue); border-color: color-mix(in srgb, var(--alerta) 30%, transparent); }
+.aviso--exito { background: var(--exito-tenue); border-color: color-mix(in srgb, var(--exito) 30%, transparent); }
+
+/* --- Tablas --------------------------------------------------------------- */
+.tabla-envoltorio { overflow-x: auto; margin: 0 -1rem; padding: 0 1rem; }
+.tabla { width: 100%; border-collapse: collapse; font-size: .88rem; min-width: 460px; }
+.tabla th {
+  text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--tinta-tenue); padding: .4rem .6rem; border-bottom: 1px solid var(--borde); white-space: nowrap;
+}
+.tabla td { padding: .55rem .6rem; border-bottom: 1px solid var(--borde); vertical-align: top; }
+.tabla tr:last-child td { border-bottom: none; }
+.tabla--compacta { font-size: .84rem; }
+.tabla--numeros td { font-variant-numeric: tabular-nums; }
+
+/* --- Formularios ---------------------------------------------------------- */
+.formulario { display: grid; gap: .8rem; }
+.formulario--filas { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); align-items: start; }
+.campo { display: grid; gap: .25rem; }
+.campo__etiqueta { font-size: .78rem; font-weight: 650; color: var(--tinta-suave); }
+.campo__etiqueta abbr { color: var(--acento); text-decoration: none; margin-left: .15rem; }
+.campo__ayuda { font-size: .74rem; color: var(--tinta-tenue); }
+.campo__candado { font-size: .74rem; color: var(--aviso); }
+.campo--bloqueado input, .campo--bloqueado textarea, .campo--bloqueado select { background: var(--superficie-2); color: var(--tinta-tenue); }
+
+input, select, textarea {
+  font: inherit; color: inherit;
+  padding: .5rem .6rem;
+  background: var(--superficie);
+  border: 1px solid var(--borde); border-radius: var(--radio-chico);
+  width: 100%;
+}
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--acento); outline-offset: 1px;
+}
+textarea { resize: vertical; min-height: 4.5rem; }
+input[type="checkbox"] { width: auto; }
+.casilla { display: flex; align-items: center; gap: .45rem; font-size: .9rem; }
+
+.boton {
+  display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
+  font: inherit; font-weight: 600; font-size: .88rem;
+  padding: .5rem .85rem; border-radius: var(--radio-chico);
+  border: 1px solid var(--acento); background: var(--acento); color: #fff;
+  cursor: pointer; text-decoration: none; white-space: nowrap;
+}
+.boton:hover { background: var(--acento-oscuro); border-color: var(--acento-oscuro); }
+.boton--secundario { background: var(--superficie); color: var(--tinta); border-color: var(--borde); }
+.boton--secundario:hover { background: var(--superficie-2); border-color: var(--tinta-tenue); }
+.boton--peligro { background: var(--superficie); color: var(--alerta); border-color: color-mix(in srgb, var(--alerta) 45%, transparent); }
+.boton--peligro:hover { background: var(--alerta-tenue); }
+.boton--texto { background: none; border-color: transparent; color: var(--tinta-suave); padding: .35rem .5rem; }
+.boton--texto:hover { background: var(--superficie-2); color: var(--tinta); }
+.boton--chico { font-size: .8rem; padding: .3rem .6rem; }
+.boton[disabled] { opacity: .5; cursor: not-allowed; }
+
+.acciones-fila { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+
+/* --- Plegables ------------------------------------------------------------ */
+.plegable { border: 1px solid var(--borde); border-radius: var(--radio-chico); background: var(--superficie); }
+.plegable + .plegable { margin-top: .5rem; }
+.plegable summary {
+  cursor: pointer; padding: .55rem .8rem; font-size: .88rem; font-weight: 600; color: var(--tinta-suave);
+}
+.plegable summary:hover { color: var(--tinta); }
+.plegable__cuerpo { padding: .2rem .8rem .8rem; border-top: 1px solid var(--borde); }
+
+/* --- Progreso ------------------------------------------------------------- */
+.progreso { list-style: none; display: flex; flex-wrap: wrap; gap: .3rem; margin: 0; padding: 0; }
+.progreso__paso {
+  display: flex; align-items: center; gap: .35rem;
+  font-size: .78rem; padding: .25rem .6rem; border-radius: 999px;
+  background: var(--superficie-2); color: var(--tinta-tenue); border: 1px solid var(--borde);
+}
+.progreso__paso--hecho { background: var(--exito-tenue); color: var(--exito); border-color: color-mix(in srgb, var(--exito) 30%, transparent); }
+.progreso__paso--actual { background: var(--acento-tenue); color: var(--acento-oscuro); border-color: color-mix(in srgb, var(--acento) 40%, transparent); font-weight: 650; }
+.progreso__marca { font-weight: 700; }
+
+/* --- Comparación de tiras ------------------------------------------------- */
+.comparacion th.es-final, .comparacion td.es-final { background: color-mix(in srgb, var(--exito-tenue) 70%, transparent); }
+.comparacion th.es-acordado, .comparacion td.es-acordado { background: color-mix(in srgb, var(--info-tenue) 60%, transparent); }
+.leyenda { display: flex; flex-wrap: wrap; gap: .6rem; font-size: .76rem; color: var(--tinta-tenue); margin-top: .5rem; }
+.leyenda span::before { content: '■'; margin-right: .25rem; }
+.leyenda .es-propuesto::before { color: var(--tinta-tenue); }
+.leyenda .es-acordado::before { color: var(--info); }
+.leyenda .es-final::before { color: var(--exito); }
+
+/* Lo acordado se escribe dentro de la tabla, en el acta: la columna del acuerdo manda y
+   la de tiras se queda angosta, para que el renglón no quede todo lleno de recuadros. */
+.tabla.acordado td { vertical-align: top; }
+.tabla.acordado textarea { width: 100%; min-width: 11rem; min-height: 2.8rem; padding: .35rem .45rem; }
+.tabla.acordado .entrada--numero { width: 4.5rem; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* --- Pestañas de la agenda ------------------------------------------------ */
+/* Cada período y cada vista es un enlace con su propia dirección, para poder
+   guardarla o pasarla; por eso son enlaces y no botones de un formulario. */
+.pestanas { display: flex; flex-wrap: wrap; gap: .35rem; }
+.pestana {
+  display: inline-block; padding: .35rem .7rem; border-radius: 999px;
+  border: 1px solid var(--borde); background: var(--superficie);
+  font-size: .82rem; font-weight: 550; color: var(--tinta-tenue); text-decoration: none;
+}
+.pestana:hover { border-color: var(--acento); color: var(--acento-oscuro); }
+.pestana--activa {
+  background: var(--acento); border-color: var(--acento); color: #fff;
+}
+.pestana--activa:hover { color: #fff; }
+.resumen-agenda { margin: .2rem 0 .6rem; }
+/* Una reunión cancelada queda como registro: se ve, pero no compite con las vivas. */
+.item--cancelada { opacity: .6; }
+.item__nota { white-space: pre-wrap; font-style: italic; }
+
+/* El enlace de acceso se muestra una sola vez: tiene que poder copiarse de un vistazo
+   y entero, sin que se corte ni se mezcle con el resto de la ficha. */
+.enlace-acceso {
+  word-break: break-all; font-size: .82rem; line-height: 1.5;
+  background: var(--superficie-2); border: 1px solid var(--borde);
+  border-radius: var(--radio-chico); padding: .5rem .6rem; margin: .4rem 0;
+  user-select: all;
+}
+
+/* --- Varios --------------------------------------------------------------- */
+.texto-largo { white-space: pre-wrap; font-size: .92rem; }
+.pila { display: grid; gap: .7rem; }
+.pila--chica { gap: .4rem; }
+.fila-entre { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: space-between; align-items: center; }
+.menor { font-size: .8rem; color: var(--tinta-tenue); }
+.mono { font-family: var(--mono); font-size: .8rem; }
+.lista-limpia { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.item {
+  display: grid; gap: .2rem; padding: .6rem .7rem;
+  border: 1px solid var(--borde); border-radius: var(--radio-chico); background: var(--superficie);
+}
+.item__titulo { font-weight: 600; font-size: .92rem; }
+.item__meta { font-size: .78rem; color: var(--tinta-tenue); display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.item--alerta { border-left: 3px solid var(--alerta); }
+.item--aviso { border-left: 3px solid var(--aviso); }
+.item--exito { border-left: 3px solid var(--exito); }
+.separador { height: 1px; background: var(--borde); margin: 1rem 0; border: 0; }
+.cinta-demo {
+  background: var(--aviso-tenue); color: var(--aviso);
+  border: 1px solid color-mix(in srgb, var(--aviso) 35%, transparent);
+  padding: .45rem .7rem; border-radius: var(--radio-chico); font-size: .8rem; margin-bottom: .8rem;
+}
+.diferencias { display: grid; gap: .6rem; }
+.diferencia { display: grid; gap: .2rem; border: 1px solid var(--borde); border-radius: var(--radio-chico); padding: .6rem; }
+.diferencia__fila { display: grid; grid-template-columns: 90px 1fr; gap: .4rem; font-size: .85rem; }
+.diferencia__fila span:first-child { color: var(--tinta-tenue); font-size: .78rem; }
+
+/* --- Disponibilidad ------------------------------------------------------- */
+.semana { display: grid; gap: .4rem; }
+.semana__dia {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .4rem;
+  padding: .4rem .55rem; border: 1px solid var(--borde); border-radius: var(--radio-chico);
+  background: var(--superficie);
+}
+.semana__dia--libre { background: var(--superficie-2); }
+.semana__nombre {
+  width: 3rem; flex: none; font-size: .78rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em; color: var(--tinta-tenue);
+}
+.semana__libre { color: var(--tinta-tenue); font-size: .85rem; }
+.franja {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .15rem .25rem .15rem .6rem; border-radius: 999px;
+  background: var(--acento-tenue); color: var(--acento-oscuro);
+  border: 1px solid color-mix(in srgb, var(--acento) 30%, transparent);
+  font-size: .82rem; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.franja small { font-weight: 400; opacity: .8; }
+.franja .boton--texto { color: inherit; padding: 0 .3rem; font-size: 1rem; line-height: 1; }
+@media (min-width: 700px) { .semana__nombre { width: 3.5rem; } }
+
+/* --- Visita al club ------------------------------------------------------- */
+/* Ir al club ocupa el viaje: se marca distinto de las reuniones en la liga. */
+.chip--visita {
+  background: var(--celeste-tenue);
+  color: var(--info);
+  border-color: color-mix(in srgb, var(--celeste) 55%, transparent);
+  font-weight: 700;
+}
+.item--visita { border-left: 3px solid var(--celeste); }
+.bloque {
+  font-size: .76rem; color: var(--info);
+  background: var(--celeste-tenue); border-radius: 999px; padding: .05rem .45rem;
+  white-space: nowrap;
+}
+.tarjeta--visita { border-color: color-mix(in srgb, var(--celeste) 45%, transparent); }
+.tarjeta--visita .tarjeta__cabecera { background: var(--celeste-tenue); }
+
+/* --- Íconos de navegación ------------------------------------------------- */
+.icono { width: 1.15em; height: 1.15em; display: block; }
+.lateral__icono { display: flex; align-items: center; justify-content: center; }
+.barra-inferior__enlace .icono { width: 1.25em; height: 1.25em; margin-inline: auto; }
+
+/* Clubes que contactan los directivos. */
+.chip--directo {
+  background: var(--tinta); color: #fff;
+  border-color: var(--tinta); font-weight: 700;
+}
+
+/* Hora en dos listas, sin reloj que gire sin fin. */
+.hora { display: flex; align-items: center; gap: .35rem; }
+.hora select { width: auto; min-width: 4.3rem; font-variant-numeric: tabular-nums; }
+
+/* Campo obligatorio sin completar: se marca para que se note. */
+.campo--error {
+  outline: 2px solid var(--alerta);
+  outline-offset: 1px;
+  background: var(--alerta-tenue);
+}
+
+/* Fecha en tres listas: no se puede dejar a medias. */
+.fecha-partida { display: flex; gap: .35rem; flex-wrap: wrap; }
+.fecha-partida select { width: auto; min-width: 4.2rem; }
+.fecha-partida select:nth-child(2) { min-width: 7rem; }
+
+/* Confirmación dentro de la página, sin depender del diálogo del navegador. */
+.confirmacion {
+  display: grid; gap: .5rem; margin-top: .6rem;
+  padding: .7rem .85rem; border-radius: var(--radio-chico);
+  background: var(--aviso-tenue);
+  border: 1px solid color-mix(in srgb, var(--aviso) 40%, transparent);
+  font-size: .88rem;
+}
+.confirmacion p { margin: 0; }

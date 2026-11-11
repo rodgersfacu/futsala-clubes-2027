@@ -1,0 +1,22 @@
+{
+  "name": "futsala-clubes-2027",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Aplicacion interna FUTSALA: cierre 2026, proyeccion y reconfirmacion de clubes 2027.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "seed": "node scripts/seed.js",
+    "reiniciar": "node scripts/seed.js --reiniciar",
+    "importar": "node scripts/importar-paquete.js",
+    "pruebas": "node scripts/pruebas.js",
+    "exportar": "node scripts/exportar.js",
+    "mover-datos": "node scripts/mover-datos.js",
+    "acceso": "node scripts/acceso.js",
+    "prioridades": "node scripts/prioridades.js",
+    "respaldo": "node scripts/respaldo.js"
+  }
+}

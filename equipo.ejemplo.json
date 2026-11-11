@@ -1,0 +1,17 @@
+[
+  {
+    "nombre": "Nombre Apellido",
+    "email": "una.direccion@ejemplo.com",
+    "rol": "Direccion"
+  },
+  {
+    "nombre": "Otra Persona",
+    "email": "otra.direccion@ejemplo.com",
+    "rol": "Direccion"
+  },
+  {
+    "nombre": "Quien Ayuda",
+    "email": "ayudante@ejemplo.com",
+    "rol": "Ayudante"
+  }
+]
