@@ -28,3 +28,8 @@ node_modules/
 *.zip
 Thumbs.db
 .DS_Store
+
+# Dossier interno: dice cuántos clubes y cuántas tiras tiene la liga, el proceso
+# de venta y los límites conocidos. Está marcado "uso interno" en su propia
+# portada. Si se decide publicarlo, basta con sacar esta línea.
+docs/REVISION_EXTERNA.md
