@@ -43,9 +43,10 @@ if (!EQUIPO.some((p) => p.rol === 'Direccion')) {
 abrirBase();
 
 // El alta exige rol Dirección: la hace la identidad provisoria, que es la única que hay
-// la primera vez. Si ya no está, la hace la primera Dirección activa.
+// la primera vez. Si ya no está o quedó desactivada (después de la primera carga), la
+// hace la primera Dirección activa.
 const provisorio = usuarios.porEmail('provisorio@futsala.local');
-const actor = provisorio ?? todos("SELECT * FROM usuario WHERE rol = 'Direccion' AND activo = 1").at(0);
+const actor = provisorio?.activo === 1 ? provisorio : todos("SELECT * FROM usuario WHERE rol = 'Direccion' AND activo = 1").at(0);
 if (!actor) {
   console.error('No hay ninguna Dirección activa que pueda dar de alta al equipo.');
   process.exit(1);
