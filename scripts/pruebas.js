@@ -1993,6 +1993,33 @@ ok('En esta máquina no manda a esperar a Dirección', !/Dirección te lo pasa/.
 ok('Publicada, Dirección sigue siendo quien lo pasa', /Dirección te lo pasa/.test(entrega.comoLlega({ FUTSALA_PUBLICO: '1' })));
 ok('Publicada, no muestra dónde está el registro', !entrega.comoLlega({ FUTSALA_PUBLICO: '1' }).includes(entrega.REGISTRO));
 
+seccion('23. La sesión dura 30 días, y lo controla el servidor');
+
+{
+  const auth = await import('../server/auth.js');
+  const alguien = uno('SELECT * FROM usuario WHERE activo = 1 LIMIT 1');
+  const valorDe = (cookie) => cookie.split(';')[0].split('=').slice(1).join('=');
+  const conCookie = (cookie) => auth.usuarioDeSesion({ [cookie.split('=')[0]]: valorDe(cookie) });
+  const firmadaHace = (dias) => {
+    const real = Date.now;
+    Date.now = () => real() - dias * 24 * 60 * 60 * 1000;
+    try {
+      return auth.cookieSesion(alguien.id, { seguro: true });
+    } finally {
+      Date.now = real;
+    }
+  };
+
+  ok('El navegador la guarda 30 días', auth.cookieSesion(alguien.id).includes(`Max-Age=${60 * 60 * 24 * 30}`));
+  ok('Recién firmada, entra', conCookie(auth.cookieSesion(alguien.id))?.id === alguien.id);
+  ok('A los 29 días todavía entra', conCookie(firmadaHace(29))?.id === alguien.id);
+  ok('A los 31 días no entra, aunque el navegador la siga mandando', conCookie(firmadaHace(31)) === null);
+  ok('Con fecha futura no entra', conCookie(firmadaHace(-1)) === null);
+  const cuerpoFalso = valorDe(auth.cookieSesion(alguien.id)).split('.');
+  cuerpoFalso[1] = String(Date.now() + 1);
+  ok('Cambiarle la fecha a mano rompe la firma', auth.usuarioDeSesion({ futsala_sesion: cuerpoFalso.join('.') }) === null);
+}
+
 // --- Cierre -----------------------------------------------------------------
 
 cerrarBase();
