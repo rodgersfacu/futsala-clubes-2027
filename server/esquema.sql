@@ -11,8 +11,31 @@ CREATE TABLE IF NOT EXISTS usuario (
   rol           TEXT NOT NULL CHECK (rol IN ('Direccion', 'Ayudante', 'Consulta')),
   activo        INTEGER NOT NULL DEFAULT 1 CHECK (activo IN (0, 1)),
   creado_en     TEXT NOT NULL,
-  version       INTEGER NOT NULL DEFAULT 1
+  version       INTEGER NOT NULL DEFAULT 1,
+  -- Ingreso con contraseña propia (scrypt con sal individual; nunca la contraseña).
+  clave_hash    TEXT,
+  -- Identificador de la cuenta Google vinculada (verificada por Firebase).
+  google_sub    TEXT
 );
+CREATE UNIQUE INDEX IF NOT EXISTS usuario_google_sub ON usuario(google_sub) WHERE google_sub IS NOT NULL;
+
+-- Pedidos de acceso de personas que se registraron solas (correo y contraseña, o Google).
+-- No dan ningún permiso: Dirección los aprueba eligiendo el rol, y recién ahí nace el
+-- usuario. Las filas no se borran: quedan como registro de quién pidió y quién resolvió.
+CREATE TABLE IF NOT EXISTS solicitud_acceso (
+  id              TEXT PRIMARY KEY,
+  email           TEXT NOT NULL CHECK (email = lower(trim(email)) AND length(email) >= 5),
+  nombre          TEXT NOT NULL CHECK (length(trim(nombre)) >= 2),
+  clave_hash      TEXT,
+  google_sub      TEXT,
+  estado          TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobada', 'rechazada')),
+  creada_en       TEXT NOT NULL,
+  resuelta_en     TEXT,
+  resuelta_por_id TEXT REFERENCES usuario(id) ON DELETE RESTRICT,
+  usuario_id      TEXT REFERENCES usuario(id) ON DELETE RESTRICT,
+  CHECK (clave_hash IS NOT NULL OR google_sub IS NOT NULL)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS solicitud_pendiente_email ON solicitud_acceso(email) WHERE estado = 'pendiente';
 
 -- Enlaces de acceso de un solo uso. Reemplazan a la lista de identidades de prueba: para
 -- entrar hace falta un enlace que se generó para esa persona y que todavía no se usó.

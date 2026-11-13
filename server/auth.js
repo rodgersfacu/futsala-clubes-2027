@@ -1,7 +1,10 @@
 // Identidad y autorización.
 //
-// AUTENTICACIÓN: no hay contraseñas. Se entra con un enlace de un solo uso generado para
-// esa persona, que vence a los 15 minutos (ver `dominio/accesos.js`). Usado el enlace,
+// AUTENTICACIÓN: tres formas de entrar, que terminan en la misma cookie firmada: correo y
+// contraseña, Google (vía Firebase, ver `lib/firebase.js` y `dominio/ingreso.js`), y el
+// enlace de un solo uso generado para esa persona, que vence a los 15 minutos (ver
+// `dominio/accesos.js`). Quien se registra solo queda pendiente hasta que Dirección lo
+// aprueba. Usado el enlace,
 // el servidor firma una cookie de sesión con el id del usuario y la cookie vale 30 días.
 // Son 30 días y no 12 horas porque, sin envío de correos, cada enlace nuevo lo tiene que
 // generar alguien a mano. Si alguien pierde el teléfono, se lo desactiva y queda afuera:
@@ -41,6 +44,11 @@ function secretoFirma() {
 
 function firmar(valor) {
   return createHmac('sha256', secretoFirma()).update(valor).digest('base64url');
+}
+
+/** Firma con el secreto de la aplicación, para otros valores que no deben poder falsificarse. */
+export function firmarValor(valor) {
+  return firmar(valor);
 }
 
 /**

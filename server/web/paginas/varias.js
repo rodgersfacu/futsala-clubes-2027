@@ -3,6 +3,7 @@ import * as ui from '../ui.js';
 import { pagina } from '../layout.js';
 import { fechaCorta, fechaHoraCorta } from '../../lib/fechas.js';
 import { etiquetaEvento } from './club.js';
+import { bloqueGoogle } from './ingreso.js';
 
 // --- Historial ---------------------------------------------------------------
 
@@ -175,7 +176,28 @@ export function sesion({ usuario, csrf, avisos, datos }) {
     ${ui.tarjeta({
       titulo: 'Entrar',
       tono: 'acento',
-      subtitulo: 'Uso interno de FUTSALA. Escribí el correo con el que estás cargado.',
+      subtitulo: 'Uso interno de FUTSALA.',
+      cuerpo: html`
+        ${ui.formulario({
+          accion: '/sesion/clave',
+          csrf,
+          clase: 'formulario--filas',
+          cuerpo: html`
+            ${ui.campo({ nombre: 'email', etiqueta: 'Tu correo', tipo: 'email', obligatorio: true, atributos: 'autocomplete="username" maxlength="100"' })}
+            ${ui.campo({ nombre: 'clave', etiqueta: 'Contraseña', tipo: 'password', obligatorio: true, atributos: 'autocomplete="current-password" maxlength="128"' })}
+            <div style="align-self:end">${ui.boton('Entrar', { clase: 'boton' })}</div>`,
+        })}
+        ${datos.firebase
+          ? html`<div class="separador"></div>${bloqueGoogle({ firebase: datos.firebase, csrf, accion: '/sesion/google' })}`
+          : ''}
+        <div class="separador"></div>
+        <p class="menor">¿Primera vez? ${ui.enlace('/registrarse', 'Creá tu cuenta')}: queda pendiente hasta que
+          Dirección la apruebe.</p>`,
+    })}
+
+    ${ui.tarjeta({
+      titulo: 'Entrar con un enlace de acceso',
+      subtitulo: 'Si todavía no creaste contraseña, o la olvidaste. Escribí el correo con el que estás cargado.',
       cuerpo: html`
         ${ui.formulario({
           accion: '/sesion',
@@ -193,8 +215,8 @@ export function sesion({ usuario, csrf, avisos, datos }) {
         })}
         <div class="separador"></div>
         <p class="menor">
-          No hay contraseñas. Se genera un enlace que sirve <strong>una sola vez</strong> y vence a
-          los ${datos.minutos} minutos. ${datos.comoLlega}
+          Se genera un enlace que sirve <strong>una sola vez</strong> y vence a los ${datos.minutos}
+          minutos. ${datos.comoLlega} Una vez adentro, creá tu contraseña desde Mi cuenta.
         </p>`,
     })}
 

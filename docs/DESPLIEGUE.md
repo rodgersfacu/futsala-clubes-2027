@@ -138,6 +138,7 @@ una tarjeta. El resto ya está listo en este repositorio.
 | Disco persistente montado en `/datos` | Sin esto la base se borra en cada despliegue. Es el error clásico con SQLite. |
 | HTTPS en el dominio | La aplicación va por HTTP detrás del proxy; el cifrado lo pone el proveedor. |
 | Variable secreta `FUTSALA_SECRETO` | Firma las sesiones. Tiene que ser larga, al azar y **siempre la misma**: si cambia, todos quedan afuera. |
+| Variables `FUTSALA_FIREBASE_*` (optativas) | API key, auth domain, project id y app id del proyecto Firebase. Sin ellas no aparece el botón de Google. El dominio público tiene que figurar en Firebase → Authentication → Settings → Authorized domains. |
 
 El `Dockerfile` ya deja puestas `FUTSALA_PUBLICO=1`, `FUTSALA_PROXY=1` y `FUTSALA_DATOS=/datos`.
 Ahí la aplicación escucha en todas las interfaces, porque el proxy del proveedor está en

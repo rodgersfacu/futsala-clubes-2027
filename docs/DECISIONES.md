@@ -92,7 +92,27 @@ ningún compromiso abierto y ningún conflicto de duplicados.
 
 ## Cómo se entra
 
-- **Enlaces de un solo uso, sin contraseñas.** Para entrar hace falta un enlace generado
+- **Tres formas de entrar (desde noviembre de 2026): correo y contraseña, Google y enlace
+  de un solo uso.** Las tres terminan en la misma cookie de sesión firmada. Se sumaron para
+  replicar el acceso de Futsala Clubes y que nadie dependa de que Dirección le genere un
+  enlace cada vez.
+- **Registrarse no da permisos.** Quien crea su cuenta (con contraseña o con Google) queda
+  como *solicitud pendiente*. Dirección la ve en Administración, corrobora que sea del
+  equipo, elige el rol y recién ahí nace el usuario. El correo de una cuenta con contraseña
+  no está verificado; el de Google sí.
+- **Contraseñas con scrypt y sal individual.** Entre 8 y 128 caracteres con al menos un
+  signo. Nunca se guardan en claro. El mensaje de error es el mismo exista o no el correo.
+- **Google por Firebase: el único servicio de terceros, y optativo.** Se decidió aceptarlo
+  a propósito. Sin las variables `FUTSALA_FIREBASE_*` el botón no aparece y el resto
+  funciona igual. El token se verifica en el servidor sin dependencias (node:crypto contra
+  las claves públicas de Google). Firebase no deja meter un valor propio en el token, así
+  que la pantalla entrega una cookie firmada de un solo uso y se exige que el ingreso en
+  Google sea posterior a ella: un token viejo o robado no sirve.
+- **Google no se apropia de cuentas por coincidir el correo.** Si Dirección dio de alta el
+  correo y la persona no tiene contraseña, el primer ingreso con Google lo vincula. Si ya
+  tiene contraseña, tiene que vincular Google desde Mi cuenta confirmándola.
+- **Enlaces de un solo uso.** Siguen andando, sobre todo para recuperar el acceso o crear
+  la primera contraseña desde Mi cuenta. Para entrar hace falta un enlace generado
   para esa persona, que vence a los 15 minutos y sirve una sola vez. Nadie administra ni
   recuerda contraseñas, y no hay nada que robar guardado: en la base queda el **hash** del
   token, nunca el token.

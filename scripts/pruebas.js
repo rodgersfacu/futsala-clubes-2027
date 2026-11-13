@@ -2020,6 +2020,128 @@ seccion('23. La sesión dura 30 días, y lo controla el servidor');
   ok('Cambiarle la fecha a mano rompe la firma', auth.usuarioDeSesion({ futsala_sesion: cuerpoFalso.join('.') }) === null);
 }
 
+// --- 24. Correo y contraseña, Google y solicitudes de acceso -----------------
+
+seccion('24. Correo y contraseña, Google (Firebase) y solicitudes de acceso');
+{
+  const ingreso = await import('../server/dominio/ingreso.js');
+  const firebase = await import('../server/lib/firebase.js');
+  const { generateKeyPairSync, sign: firmarRsa } = await import('node:crypto');
+  const auth = await import('../server/auth.js');
+  const clave = 'Piloto123!';
+
+  // Registro: queda pendiente y no crea usuario.
+  const antes = uno('SELECT count(*) AS n FROM usuario').n;
+  const s1 = ingreso.registrarse({ nombre: 'Persona Nueva', email: 'Nueva@Example.invalid', clave, repetir: clave });
+  ok('Registrarse deja una solicitud pendiente', s1.estado === 'pendiente' && s1.email === 'nueva@example.invalid');
+  ok('Registrarse no crea usuario ni da permisos', uno('SELECT count(*) AS n FROM usuario').n === antes);
+  ok('La contraseña no se guarda en claro', s1.clave_hash.startsWith('scrypt$') && !s1.clave_hash.includes(clave));
+  rechaza('Dos solicitudes pendientes con el mismo correo', () =>
+    ingreso.registrarse({ nombre: 'Otra', email: 'nueva@example.invalid', clave, repetir: clave }), 'pendiente');
+  rechaza('No se registra un correo que ya tiene usuario', () =>
+    ingreso.registrarse({ nombre: 'Copia', email: colab.email, clave, repetir: clave }), 'ya tiene usuario');
+  rechaza('Contraseña sin signo', () =>
+    ingreso.registrarse({ nombre: 'Débil', email: 'debil@example.invalid', clave: 'Piloto123', repetir: 'Piloto123' }), 'signo');
+  rechaza('Contraseña corta', () =>
+    ingreso.registrarse({ nombre: 'Corta', email: 'corta@example.invalid', clave: 'P1!', repetir: 'P1!' }), '8');
+  rechaza('Las dos contraseñas tienen que coincidir', () =>
+    ingreso.registrarse({ nombre: 'Distinta', email: 'distinta@example.invalid', clave, repetir: 'Otra123!' }), 'no coinciden');
+
+  rechaza('Pendiente: con su contraseña no entra todavía', () =>
+    ingreso.ingresarConClave({ email: 'nueva@example.invalid', clave }), 'pendiente');
+  rechaza('Contraseña equivocada', () =>
+    ingreso.ingresarConClave({ email: 'nueva@example.invalid', clave: 'Otra123!' }), 'incorrectos');
+  rechaza('Correo inexistente: mismo mensaje que contraseña equivocada', () =>
+    ingreso.ingresarConClave({ email: 'nadie@example.invalid', clave }), 'incorrectos');
+
+  // Aprobación.
+  rechaza('Solo Dirección aprueba', () => ingreso.aprobar(colab, s1.id, { rol: 'Ayudante' }), 'Dirección');
+  rechaza('El rol tiene que ser válido', () => ingreso.aprobar(dir1, s1.id, { rol: 'Admin' }), 'rol');
+  const aprobado = ingreso.aprobar(dir1, s1.id, { rol: 'Ayudante' });
+  ok('Aprobar crea el usuario activo con el rol elegido', aprobado.rol === 'Ayudante' && aprobado.activo === 1);
+  ok('La solicitud queda aprobada y apunta al usuario', uno('SELECT * FROM solicitud_acceso WHERE id = ?', s1.id).usuario_id === aprobado.id);
+  ok('Aprobado, entra con su correo y contraseña', ingreso.ingresarConClave({ email: 'NUEVA@example.invalid', clave }).id === aprobado.id);
+  rechaza('Una solicitud resuelta no se vuelve a resolver', () => ingreso.rechazar(dir1, s1.id), 'ya se resolvió');
+  ok('La aprobación queda en el historial', !!uno(`SELECT id FROM historial WHERE entidad_id = ? AND tipo = 'usuario.creado'`, aprobado.id));
+
+  const s2 = ingreso.registrarse({ nombre: 'Rechazable', email: 'rechazo@example.invalid', clave, repetir: clave });
+  ingreso.rechazar(dir1, s2.id);
+  rechaza('Rechazada, no entra', () => ingreso.ingresarConClave({ email: 'rechazo@example.invalid', clave }), 'incorrectos');
+
+  // Mi cuenta: contraseña.
+  rechaza('Cambiar la contraseña exige la actual', () =>
+    ingreso.cambiarClave(aprobado, { actual: 'Mala123!', clave: 'Nueva456!', repetir: 'Nueva456!' }), 'actual');
+  ingreso.cambiarClave(aprobado, { actual: clave, clave: 'Nueva456!', repetir: 'Nueva456!' });
+  ok('Con la actual, la cambia', ingreso.ingresarConClave({ email: aprobado.email, clave: 'Nueva456!' }).id === aprobado.id);
+  ingreso.cambiarClave(colab2, { clave, repetir: clave });
+  ok('Quien entró por enlace crea su primera contraseña', ingreso.ingresarConClave({ email: colab2.email, clave }).id === colab2.id);
+  rechaza('Usuario inactivo no entra aunque la contraseña sea correcta', () => {
+    ejecutar('UPDATE usuario SET clave_hash = ? WHERE id = ?', ingreso.hashClave(clave), inactivo.id);
+    ingreso.ingresarConClave({ email: inactivo.email, clave });
+  }, 'inactivo');
+
+  // Firebase: token firmado con una clave de prueba.
+  const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  firebase.usarClavesDePrueba(new Map([['k1', publicKey]]));
+  const proyecto = 'futsala-prueba';
+  const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const token = ({ email, sub, aud = proyecto, proveedor = 'google.com', clavePrivada = privateKey }) => {
+    const s = Math.floor(Date.now() / 1000);
+    const cuerpo = `${b64({ alg: 'RS256', kid: 'k1', typ: 'JWT' })}.${b64({
+      iss: `https://securetoken.google.com/${aud}`, aud, sub: `uid-${sub}`, iat: s, exp: s + 3600,
+      auth_time: s, email, email_verified: true, name: 'Persona Google',
+      firebase: { sign_in_provider: proveedor, identities: { 'google.com': [sub], email: [email] } },
+    })}`;
+    return `${cuerpo}.${firmarRsa('RSA-SHA256', Buffer.from(cuerpo), clavePrivada).toString('base64url')}`;
+  };
+  const ident = await firebase.verificarToken(token({ email: 'g@example.invalid', sub: 'g-1' }), proyecto);
+  ok('Token de Firebase válido: devuelve la identidad Google', ident?.sub === 'g-1' && ident.email === 'g@example.invalid');
+  ok('Token de otro proyecto: no sirve', (await firebase.verificarToken(token({ email: 'g@example.invalid', sub: 'g-1', aud: 'otro' }), proyecto)) === null);
+  const otraClave = generateKeyPairSync('rsa', { modulusLength: 2048 }).privateKey;
+  ok('Token firmado con otra clave: no sirve', (await firebase.verificarToken(token({ email: 'g@example.invalid', sub: 'g-1', clavePrivada: otraClave }), proyecto)) === null);
+  ok('Token de otro proveedor (no Google): no sirve', (await firebase.verificarToken(token({ email: 'g@example.invalid', sub: 'g-1', proveedor: 'password' }), proyecto)) === null);
+  ok('Basura en lugar de token: no sirve', (await firebase.verificarToken('a.b.c', proyecto)) === null);
+
+  // Desafío de un solo uso.
+  const valorCookie = (c) => c.split(';')[0].slice(c.indexOf('=') + 1);
+  const cookies = { futsala_google: valorCookie(firebase.cookieDesafio()) };
+  ok('Ingreso posterior al desafío: vale', firebase.desafioCumplido(cookies, { ingresoEn: Date.now() }));
+  ok('El mismo desafío no sirve dos veces', !firebase.desafioCumplido(cookies, { ingresoEn: Date.now() }));
+  const otra = { futsala_google: valorCookie(firebase.cookieDesafio()) };
+  ok('Ingreso en Google anterior al desafío (token viejo): no vale', !firebase.desafioCumplido(otra, { ingresoEn: Date.now() - 30 * 60000 }));
+  const [marca, azar] = otra.futsala_google.split('.');
+  ok('Desafío con firma falsa: no vale', !firebase.desafioCumplido({ futsala_google: `${marca}.${azar}.falsa` }, { ingresoEn: Date.now() }));
+
+  // Ingreso con Google.
+  const g = (email, sub) => ({ sub, email, nombre: 'Persona Google', ingresoEn: Date.now() });
+  ok('Correo desconocido: queda como solicitud pendiente', ingreso.ingresarConGoogle(g('g@example.invalid', 'g-1')).pendiente === true);
+  ok('Volver a intentar no duplica la solicitud', ingreso.ingresarConGoogle(g('g@example.invalid', 'g-1')).pendiente === true
+    && uno(`SELECT count(*) AS n FROM solicitud_acceso WHERE email = 'g@example.invalid'`).n === 1);
+  const sg = ingreso.solicitudPendiente('g@example.invalid');
+  const ug = ingreso.aprobar(dir1, sg.id, { rol: 'Consulta' });
+  ok('Aprobado, entra con Google', ingreso.ingresarConGoogle(g('g@example.invalid', 'g-1')).usuario?.id === ug.id);
+  ok('Dado de alta por Dirección y sin contraseña: Google con su correo lo vincula',
+    ingreso.ingresarConGoogle(g(consulta.email, 'c-1')).usuario?.id === consulta.id
+      && uno('SELECT google_sub FROM usuario WHERE id = ?', consulta.id).google_sub === 'c-1');
+  rechaza('Con contraseña creada, coincidir el correo no alcanza', () => ingreso.ingresarConGoogle(g(colab2.email, 'x-1')), 'contraseña');
+  rechaza('Otra cuenta Google con un correo ya vinculado', () => ingreso.ingresarConGoogle(g(consulta.email, 'otra-cuenta')), 'otra cuenta');
+  ejecutar('UPDATE usuario SET activo = 0 WHERE id = ?', ug.id);
+  rechaza('Inactivo no entra con Google', () => ingreso.ingresarConGoogle(g('g@example.invalid', 'g-1')), 'inactivo');
+
+  // Vincular desde Mi cuenta.
+  rechaza('Vincular exige la contraseña actual', () => ingreso.vincularGoogle(colab2, g(colab2.email, 'x-1'), 'Mala123!'), 'contraseña');
+  rechaza('Vincular exige el mismo correo', () => ingreso.vincularGoogle(colab2, g('otro@example.invalid', 'x-1'), clave), 'mismo correo');
+  rechaza('Una cuenta Google ya usada no se vincula a otro', () => ingreso.vincularGoogle(colab2, g(colab2.email, 'c-1'), clave), 'otro usuario');
+  ingreso.vincularGoogle(colab2, g(colab2.email, 'x-1'), clave);
+  ok('Vinculado, entra con Google y conserva su contraseña',
+    ingreso.ingresarConGoogle(g(colab2.email, 'x-1')).usuario?.id === colab2.id
+      && ingreso.ingresarConClave({ email: colab2.email, clave }).id === colab2.id);
+
+  ok('Sin variables FUTSALA_FIREBASE_*, Google queda apagado', firebase.configuracion({}) === null);
+  ok('La sesión sigue siendo la misma cookie firmada',
+    auth.usuarioDeSesion({ futsala_sesion: valorCookie(auth.cookieSesion(colab2.id)) })?.id === colab2.id);
+}
+
 // --- Cierre -----------------------------------------------------------------
 
 cerrarBase();
