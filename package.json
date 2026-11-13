@@ -9,6 +9,8 @@
   },
   "scripts": {
     "start": "node server/index.js",
+    "tunel": "node scripts/tunel.js",
+    "preparar-tunel": "node scripts/preparar-tunel.js",
     "seed": "node scripts/seed.js",
     "reiniciar": "node scripts/seed.js --reiniciar",
     "importar": "node scripts/importar-paquete.js",

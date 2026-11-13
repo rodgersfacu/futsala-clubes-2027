@@ -80,7 +80,7 @@ export function pagina({
       ${usuario
         ? html`
             <span class="usuario">
-              <span class="usuario__nombre">${usuario.nombre}</span>
+              <a class="usuario__nombre" href="/cuenta" title="Mi cuenta">${usuario.nombre}</a>
               ${etiquetaRol(usuario.rol)}
               ${usuario.activo !== 1 ? html`<span class="chip chip--alerta">inactivo</span>` : ''}
             </span>

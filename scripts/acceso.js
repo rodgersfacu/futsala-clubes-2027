@@ -10,6 +10,10 @@
 // Uso:
 //   npm run acceso facundo@ejemplo.com
 //   npm run acceso                       (lista a quién se le puede generar)
+//
+// En la máquina del túnel lee `.env`, así el enlace sale con el dominio público
+// (FUTSALA_BASE_URL) y no con localhost. Va primero: db.js lee el entorno al cargarse.
+import './lib/entorno.js';
 import { abrirBase, todos, uno } from '../server/db.js';
 import * as accesos from '../server/dominio/accesos.js';
 

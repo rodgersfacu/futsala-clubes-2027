@@ -12,6 +12,8 @@ import * as compromisos from '../dominio/compromisos.js';
 import * as reconfirmaciones from '../dominio/reconfirmaciones.js';
 import * as conflictos from '../dominio/conflictos.js';
 import * as accesos from '../dominio/accesos.js';
+import * as ingreso from '../dominio/ingreso.js';
+import * as firebase from '../lib/firebase.js';
 import * as disponibilidad from '../dominio/disponibilidad.js';
 import * as consultas from '../dominio/consultas.js';
 import * as exportar from '../dominio/exportar.js';
@@ -28,6 +30,7 @@ import * as paginaImprimir from './paginas/imprimir.js';
 import * as paginaDisponibilidad from './paginas/disponibilidad.js';
 import * as paginaAcerca from './paginas/acerca.js';
 import * as varias from './paginas/varias.js';
+import * as paginaIngreso from './paginas/ingreso.js';
 
 const CICLO = consultas.CICLO;
 
@@ -39,6 +42,13 @@ export const rutas = [
   ['GET', '/entrar/:token', verEntrar],
   ['POST', '/entrar', entrar],
   ['POST', '/sesion/salir', salir],
+  ['POST', '/sesion/clave', entrarConClave],
+  ['POST', '/sesion/google', entrarConGoogle],
+  ['GET', '/registrarse', verRegistro],
+  ['POST', '/registrarse', registrarse],
+  ['GET', '/cuenta', verCuenta],
+  ['POST', '/cuenta/clave', guardarClave],
+  ['POST', '/cuenta/google', vincularGoogle],
 
   ['GET', '/clubes', verClubes],
   ['POST', '/clubes', crearClub],
@@ -98,6 +108,8 @@ export const rutas = [
   ['POST', '/admin/usuarios/:id', cambiarAcceso],
   ['POST', '/admin/usuarios/:id/acceso', generarAcceso],
   ['POST', '/admin/usuarios/:id/acceso/anular', anularAcceso],
+  ['POST', '/admin/solicitudes/:id/aprobar', aprobarSolicitud],
+  ['POST', '/admin/solicitudes/:id/rechazar', rechazarSolicitud],
   ['POST', '/admin/parametros', guardarParametros],
   ['POST', '/admin/conflictos/:id/resolver', resolverConflicto],
 
@@ -140,11 +152,121 @@ function verInicio(ctx) {
 }
 
 function verSesion(ctx) {
+  const config = firebase.configuracion();
   return {
     html: varias.sesion({
       ...ctx,
-      datos: { minutos: accesos.MINUTOS_VALIDO, comoLlega: entrega.comoLlega() },
+      datos: {
+        minutos: accesos.MINUTOS_VALIDO,
+        comoLlega: entrega.comoLlega(),
+        local: entrega.soloEnEstaMaquina(),
+        firebase: config,
+      },
     }),
+    cookies: desafioGoogle(ctx, config),
+  };
+}
+
+// --- Correo y contraseña, Google, registro y Mi cuenta -----------------------
+
+/** La pantalla que muestra el botón de Google entrega el desafío de un solo uso. */
+function desafioGoogle(ctx, config) {
+  return config ? [firebase.cookieDesafio({ seguro: auth.origenDe(ctx.req).seguro })] : [];
+}
+
+function frenar(ctx) {
+  if (accesos.demasiadosPedidos(procedenciaDe(ctx))) {
+    throw new ErrorNegocio('Demasiados intentos seguidos. Esperá un minuto y volvé a probar.');
+  }
+}
+
+function entrarComo(ctx, usuario, extra = []) {
+  return {
+    redirect: '/',
+    cookies: [auth.cookieSesion(usuario.id, { seguro: auth.origenDe(ctx.req).seguro }), ...extra],
+    aviso: { tono: 'exito', texto: `Entraste como ${usuario.nombre}.` },
+  };
+}
+
+function entrarConClave(ctx) {
+  frenar(ctx);
+  return entrarComo(ctx, ingreso.ingresarConClave(ctx.cuerpo));
+}
+
+/** Verifica el token de Google y que sea posterior al desafío que entregó esta pantalla. */
+async function identidadGoogle(ctx) {
+  const config = firebase.configuracion();
+  if (!config) throw new ErrorNegocio('El ingreso con Google no está habilitado.');
+  frenar(ctx);
+  const identidad = await firebase.verificarToken(ctx.cuerpo.credencial, config.projectId);
+  if (!identidad || !firebase.desafioCumplido(auth.leerCookies(ctx.req.headers.cookie), identidad)) {
+    throw new ErrorNegocio('No se pudo verificar tu ingreso con Google.', {
+      ayuda: 'Volvé a cargar la pantalla e intentá de nuevo.',
+    });
+  }
+  return identidad;
+}
+
+async function entrarConGoogle(ctx) {
+  const resultado = ingreso.ingresarConGoogle(await identidadGoogle(ctx));
+  if (resultado.pendiente) {
+    return {
+      redirect: '/sesion',
+      cookies: [firebase.cookieDesafioBorrar()],
+      aviso: {
+        tono: 'info',
+        texto: 'Recibimos tu solicitud de acceso.',
+        ayuda: 'Dirección tiene que aprobarla y asignarte un rol. Después entrás con el mismo botón de Google.',
+      },
+    };
+  }
+  return entrarComo(ctx, resultado.usuario, [firebase.cookieDesafioBorrar()]);
+}
+
+function verRegistro(ctx) {
+  if (ctx.usuario) return { redirect: '/cuenta' };
+  const config = firebase.configuracion();
+  return { html: paginaIngreso.registro({ ...ctx, datos: { firebase: config } }), cookies: desafioGoogle(ctx, config) };
+}
+
+function registrarse(ctx) {
+  frenar(ctx);
+  ingreso.registrarse(ctx.cuerpo);
+  return {
+    redirect: '/sesion',
+    aviso: {
+      tono: 'exito',
+      texto: 'Creamos tu cuenta. Queda pendiente hasta que Dirección la apruebe.',
+      ayuda: 'Cuando la aprueben, entrás con tu correo y contraseña.',
+    },
+  };
+}
+
+function verCuenta(ctx) {
+  auth.exigirActivo(ctx.usuario);
+  const config = firebase.configuracion();
+  return {
+    html: paginaIngreso.cuenta({
+      ...ctx,
+      datos: { tieneClave: !!ctx.usuario.clave_hash, tieneGoogle: !!ctx.usuario.google_sub, firebase: config },
+    }),
+    cookies: ctx.usuario.google_sub ? [] : desafioGoogle(ctx, config),
+  };
+}
+
+function guardarClave(ctx) {
+  const tenia = !!ctx.usuario?.clave_hash;
+  ingreso.cambiarClave(ctx.usuario, ctx.cuerpo);
+  return { redirect: '/cuenta', aviso: { tono: 'exito', texto: tenia ? 'Cambiamos tu contraseña.' : 'Creamos tu contraseña.' } };
+}
+
+async function vincularGoogle(ctx) {
+  auth.exigirActivo(ctx.usuario);
+  ingreso.vincularGoogle(ctx.usuario, await identidadGoogle(ctx), ctx.cuerpo.clave);
+  return {
+    redirect: '/cuenta',
+    cookies: [firebase.cookieDesafioBorrar()],
+    aviso: { tono: 'exito', texto: 'Vinculamos tu cuenta Google. Ya podés entrar con el botón de Google.' },
   };
 }
 
@@ -770,6 +892,7 @@ function datosAdmin() {
   }
   return {
     usuarios: lista,
+    solicitudes: ingreso.pendientes(),
     parametros: usuarios.parametros(),
     conflictos: conflictos.listar(),
     pendientesPorUsuario,
@@ -809,6 +932,19 @@ function anularAcceso(ctx) {
     redirect: '/admin#usuarios',
     aviso: { tono: 'exito', texto: `Anulamos ${cuantos} enlace(s) sin usar.` },
   };
+}
+
+function aprobarSolicitud(ctx) {
+  const creado = ingreso.aprobar(ctx.usuario, ctx.params.id, ctx.cuerpo);
+  return {
+    redirect: '/admin#usuarios',
+    aviso: { tono: 'exito', texto: `Aprobamos a ${creado.nombre} como ${creado.rol}. Ya puede entrar.` },
+  };
+}
+
+function rechazarSolicitud(ctx) {
+  const solicitud = ingreso.rechazar(ctx.usuario, ctx.params.id);
+  return { redirect: '/admin#solicitudes', aviso: { tono: 'info', texto: `Rechazamos la solicitud de ${solicitud.nombre}.` } };
 }
 
 function crearUsuario(ctx) {

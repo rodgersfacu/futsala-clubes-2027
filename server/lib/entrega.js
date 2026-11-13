@@ -11,6 +11,7 @@ import { appendFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { DIR_DATOS } from '../db.js';
 import { fechaHoraCorta } from './fechas.js';
+import { interfazDe } from './tunel.js';
 
 export const MODO = process.env.FUTSALA_ENVIO || 'apagado';
 
@@ -54,7 +55,26 @@ export function entregar({ usuario, enlace, expiraEn, pedidoPor = null }) {
   return { modo: 'apagado', registro: REGISTRO };
 }
 
-/** Lo que la pantalla le dice a quien pidió el enlace. Nunca muestra el enlace. */
-export function comoLlega() {
+/**
+ * Si la aplicación solo la puede usar quien está sentado en esta máquina: ni publicada
+ * ni abierta a la red local. Ahí quien pide el enlace es el mismo que tiene la consola, y
+ * decirle "Dirección te lo pasa" lo manda a esperar algo que nunca llega.
+ */
+export function soloEnEstaMaquina(env = process.env) {
+  return env.FUTSALA_PUBLICO !== '1' && interfazDe(env) === '127.0.0.1';
+}
+
+/**
+ * Lo que la pantalla le dice a quien pidió el enlace. Nunca muestra el enlace, y dice lo
+ * mismo exista o no el correo: el texto es fijo, no depende del pedido.
+ */
+export function comoLlega(env = process.env) {
+  if (soloEnEstaMaquina(env)) {
+    return (
+      'Estás usando la aplicación en esta máquina: el enlace aparece en la ventana donde corre ' +
+      `la aplicación y queda anotado en ${REGISTRO}. Si no aparece, ese correo no tiene ` +
+      'usuario: "npm run acceso" muestra la lista.'
+    );
+  }
   return 'Dirección te lo pasa: la aplicación todavía no manda correos.';
 }

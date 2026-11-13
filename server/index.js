@@ -6,6 +6,7 @@ import { abrirBase, RAIZ, RUTA_DB, uno } from './db.js';
 import * as auth from './auth.js';
 import { rutas } from './web/rutas.js';
 import * as varias from './web/paginas/varias.js';
+import { interfazDe } from './lib/tunel.js';
 import {
   ErrorNegocio,
   ErrorConflictoVersion,
@@ -24,7 +25,9 @@ const PUERTO = Number(process.env.PORT || process.env.FUTSALA_PUERTO || 4310);
 // mal configurado es peor que uno que no arranca, porque parece que anda.
 const PUBLICO = process.env.FUTSALA_PUBLICO === '1';
 const ABIERTO_A_LA_RED = PUBLICO || process.env.FUTSALA_RED === '1';
-const INTERFAZ = ABIERTO_A_LA_RED ? '0.0.0.0' : '127.0.0.1';
+// Con Cloudflare Tunnel el proxy está en esta misma máquina, y FUTSALA_INTERFAZ=127.0.0.1
+// deja el modo público escuchando solo acá (ver server/lib/tunel.js).
+const INTERFAZ = interfazDe(process.env);
 
 if (PUBLICO) {
   const faltan = [];
@@ -353,9 +356,15 @@ servidor.listen(PUERTO, INTERFAZ, () => {
   console.log('  Sin envíos ni publicación: el enlace lo reparte Dirección.');
   if (PUBLICO) {
     console.log('');
-    console.log('  Modo público: escuchando en todas las interfaces, detrás de un proxy');
-    console.log('  que pone el HTTPS. Los enlaces de acceso se arman con el dominio real');
-    console.log('  y la cookie de sesión va marcada como Secure.');
+    if (INTERFAZ === '127.0.0.1') {
+      console.log('  Modo público con túnel: escucha solo en esta máquina y cloudflared la');
+      console.log(`  publica${process.env.FUTSALA_BASE_URL ? ` en ${process.env.FUTSALA_BASE_URL}` : ''}.`);
+    } else {
+      console.log(`  Modo público: escuchando en ${INTERFAZ === '0.0.0.0' ? 'todas las interfaces' : INTERFAZ}, detrás de un proxy`);
+      console.log('  que pone el HTTPS.');
+    }
+    console.log('  Los enlaces de acceso se arman con el dominio real y la cookie de sesión');
+    console.log('  va marcada como Secure.');
   } else if (ABIERTO_A_LA_RED) {
     console.log('');
     console.log('  ATENCIÓN: abierto a la red local (FUTSALA_RED=1), por HTTP sin cifrar.');

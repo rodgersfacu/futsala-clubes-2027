@@ -52,6 +52,56 @@ function accesoDe({ csrf, u, datos }) {
     </div>`;
 }
 
+const OPCIONES_ROL = [
+  { valor: 'Direccion', texto: 'Dirección' },
+  { valor: 'Ayudante', texto: 'Ayudante' },
+  { valor: 'Consulta', texto: 'Consulta' },
+];
+
+/** Personas que se registraron solas. Hasta que Dirección elige un rol, no entran. */
+function solicitudes({ csrf, datos }) {
+  if (!datos.solicitudes || datos.solicitudes.length === 0) return '';
+  return ui.tarjeta({
+    titulo: `Solicitudes de acceso (${datos.solicitudes.length})`,
+    id: 'solicitudes',
+    subtitulo: 'Se registraron solas. Corroborá que sean del equipo antes de aprobar: el correo no está verificado si entraron con contraseña.',
+    cuerpo: html`
+      <ul class="lista-limpia">
+        ${datos.solicitudes.map(
+          (s) => html`
+            <li class="item">
+              <div class="fila-entre">
+                <span class="item__titulo">${s.nombre}</span>
+                <span class="item__meta">${fechaHoraCorta(s.creada_en)}</span>
+              </div>
+              <span class="item__meta mono">${s.email}</span>
+              <span class="item__meta">Pidió con: ${[s.clave_hash ? 'contraseña' : null, s.google_sub ? 'Google (correo verificado)' : null].filter(Boolean).join(' y ')}</span>
+              <div class="acciones-fila">
+                ${ui.formulario({
+                  accion: `/admin/solicitudes/${s.id}/aprobar`,
+                  csrf,
+                  clase: 'en-linea',
+                  cuerpo: html`
+                    ${ui.seleccion({ nombre: 'rol', etiqueta: 'Rol', valor: 'Consulta', opciones: OPCIONES_ROL })}
+                    ${ui.boton('Aprobar', { clase: 'boton boton--chico' })}`,
+                })}
+                ${ui.formulario({
+                  accion: `/admin/solicitudes/${s.id}/rechazar`,
+                  csrf,
+                  clase: 'en-linea',
+                  confirmar: `¿Rechazás la solicitud de ${s.nombre}?`,
+                  cuerpo: ui.boton('Rechazar', { clase: 'boton boton--texto boton--chico' }),
+                })}
+              </div>
+            </li>`,
+        )}
+      </ul>`,
+  });
+}
+
+const formasDeIngreso = (u) =>
+  [u.clave_hash ? 'contraseña' : null, u.google_sub ? 'Google' : null, 'enlace'].filter(Boolean).join(' · ');
+
 export function render({ usuario, csrf, avisos, datos }) {
   const esDireccion = usuario && usuario.rol === 'Direccion' && usuario.activo === 1;
 
@@ -59,6 +109,8 @@ export function render({ usuario, csrf, avisos, datos }) {
     ${esDireccion
       ? ''
       : ui.aviso('La administración de usuarios y parámetros es de solo lectura para tu rol.', { tono: 'info' })}
+
+    ${esDireccion ? solicitudes({ csrf, datos }) : ''}
 
     ${ui.tarjeta({
       titulo: 'Usuarios y roles',
@@ -77,6 +129,7 @@ export function render({ usuario, csrf, avisos, datos }) {
                   </span>
                 </div>
                 <span class="item__meta mono">${u.email}</span>
+                ${esDireccion ? html`<span class="item__meta">Entra con: ${formasDeIngreso(u)}</span>` : ''}
                 ${esDireccion ? accesoDe({ csrf, u, datos }) : ''}
                 ${esDireccion && u.id !== usuario.id
                   ? ui.formulario({
@@ -135,7 +188,7 @@ export function render({ usuario, csrf, avisos, datos }) {
                 }),
               })}
               ${ui.aviso(
-                'No cargues correos reales sin autorización. Mientras no haya autenticación real, estas identidades son solo de prueba.',
+                'No cargues correos reales sin autorización de esa persona.',
                 { tono: 'aviso' },
               )}`
           : ''}`,

@@ -27,7 +27,7 @@ de los módulos de Node. Eso es deliberado (ver `DECISIONES.md`) y conviene no r
 sin una razón fuerte.
 
 ```bash
-npm run pruebas         # 268 pruebas, sin red, base temporal propia
+npm run pruebas         # 286 pruebas, sin red, base temporal propia
 ```
 
 Las pruebas son el contrato. Si tocás algo y pasan todas, probablemente no rompiste
@@ -71,7 +71,7 @@ usan y quien lo pidió hablan así. Mantenelo.
 | `server/dominio/` | La lógica. Cada archivo es un concepto del negocio. |
 | `server/web/rutas.js` | Qué dirección hace qué. |
 | `server/web/paginas/` | El HTML, generado en el servidor. |
-| `scripts/pruebas.js` | Las 268 pruebas, agrupadas por tema. |
+| `scripts/pruebas.js` | Las 286 pruebas, agrupadas por tema. |
 | `docs/DECISIONES.md` | **Por qué** está hecho así. Leelo antes de cambiar algo grande. |
 | `docs/DESPLIEGUE.md` | Cómo ponerlo en internet. |
 
@@ -79,10 +79,12 @@ usan y quien lo pidió hablan así. Mantenelo.
 
 En orden de importancia:
 
-1. **Publicarlo** para que entren los cinco. Está todo preparado (`docs/DESPLIEGUE.md`);
-   falta elegir dónde y hacerlo.
-2. **Reponer el respaldo automático** apuntando al servidor. Hoy la tarea de Windows
-   respalda la base local, que deja de ser la que se usa en cuanto se despliegue.
+1. **Publicarlo** para que entren los cinco. Se eligió Cloudflare Tunnel desde una
+   máquina de FUTSALA que queda prendida; el código está listo (`npm run tunel`) y el
+   paso a paso en `docs/DESPLIEGUE.md`. Falta hacerlo en esa máquina.
+2. **Respaldo automático en esa máquina.** Con el túnel la base no se muda, así que no
+   hay que rehacerlo contra un servidor: `scripts/instalar-tareas.ps1` registra el
+   respaldo diario junto con el servidor.
 3. **Envío de los enlaces de acceso por correo.** Hoy los reparte Dirección a mano.
    Toca un solo archivo: `server/lib/entrega.js`.
 4. Tres decisiones chicas sin resolver: si la fecha para reconfirmar debe ser obligatoria

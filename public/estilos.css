@@ -514,3 +514,9 @@ input[type="checkbox"] { width: auto; }
   font-size: .88rem;
 }
 .confirmacion p { margin: 0; }
+
+/* Ingreso con Google */
+.google-ingreso{display:flex;flex-direction:column;gap:8px;align-items:stretch}
+.google-ingreso__boton{display:inline-flex;align-items:center;justify-content:center;gap:10px}
+.google-ingreso__boton svg{flex:none}
+.google-ingreso__mensaje:empty{display:none}

@@ -170,6 +170,9 @@ const COLUMNAS_AGREGADAS = [
   ['reunion', 'fecha_recontacto', 'TEXT'],
   ['club', 'prioridad', `TEXT NOT NULL DEFAULT '3' CHECK (prioridad IN ('1', '2', '3', '4'))`],
   ['reconfirmacion', 'reunion_id', 'TEXT REFERENCES reunion(id) ON DELETE RESTRICT'],
+  // Ingreso con contraseña y con Google (Firebase).
+  ['usuario', 'clave_hash', 'TEXT'],
+  ['usuario', 'google_sub', 'TEXT'],
 ];
 
 /**

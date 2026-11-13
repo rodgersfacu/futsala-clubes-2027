@@ -1,8 +1,14 @@
 // Identidad y autorización.
 //
-// AUTENTICACIÓN: no hay contraseñas. Se entra con un enlace de un solo uso generado para
-// esa persona, que vence a los 15 minutos (ver `dominio/accesos.js`). Usado el enlace,
-// el servidor firma una cookie de sesión con el id del usuario y la cookie vale 12 horas.
+// AUTENTICACIÓN: tres formas de entrar, que terminan en la misma cookie firmada: correo y
+// contraseña, Google (vía Firebase, ver `lib/firebase.js` y `dominio/ingreso.js`), y el
+// enlace de un solo uso generado para esa persona, que vence a los 15 minutos (ver
+// `dominio/accesos.js`). Quien se registra solo queda pendiente hasta que Dirección lo
+// aprueba. Usado el enlace,
+// el servidor firma una cookie de sesión con el id del usuario y la cookie vale 30 días.
+// Son 30 días y no 12 horas porque, sin envío de correos, cada enlace nuevo lo tiene que
+// generar alguien a mano. Si alguien pierde el teléfono, se lo desactiva y queda afuera:
+// cada pedido vuelve a leer el usuario de la base.
 //
 // Lo que esto NO resuelve, y conviene tener presente: la aplicación va por HTTP sin
 // cifrar. En la máquina de uno no importa; en una red compartida, el enlace y la cookie
@@ -40,16 +46,24 @@ function firmar(valor) {
   return createHmac('sha256', secretoFirma()).update(valor).digest('base64url');
 }
 
+/** Firma con el secreto de la aplicación, para otros valores que no deben poder falsificarse. */
+export function firmarValor(valor) {
+  return firmar(valor);
+}
+
 /**
  * `seguro` agrega la marca Secure, que le prohíbe al navegador mandar la cookie por una
  * conexión sin cifrar. Se pone cuando la petición llegó por HTTPS: si se pusiera siempre,
  * la aplicación dejaría de funcionar en la máquina de uno, donde no hay certificado.
  */
+/** Cuánto dura una sesión, en segundos. Lo controla también el servidor, no solo el navegador. */
+export const DURACION_SESION = 60 * 60 * 24 * 30;
+
 export function cookieSesion(usuarioId, { seguro = false } = {}) {
   const cuerpo = `${usuarioId}.${Date.now()}`;
   return `${COOKIE_SESION}=${cuerpo}.${firmar(cuerpo)}; Path=/; HttpOnly; SameSite=Lax;${
     seguro ? ' Secure;' : ''
-  } Max-Age=${60 * 60 * 12}`;
+  } Max-Age=${DURACION_SESION}`;
 }
 
 /**
@@ -96,6 +110,9 @@ export function usuarioDeSesion(cookies) {
   const a = Buffer.from(firma);
   const b = Buffer.from(esperada);
   if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+  // El navegador debería tirar la cookie al vencer, pero no se confía en eso.
+  const edad = Date.now() - Number(marca);
+  if (!Number.isFinite(edad) || edad < 0 || edad > DURACION_SESION * 1000) return null;
   const usuario = uno('SELECT * FROM usuario WHERE id = ?', id);
   if (!usuario) return null;
   return usuario;

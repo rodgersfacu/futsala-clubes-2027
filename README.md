@@ -1,11 +1,13 @@
 # FUTSALA Reuniones 2027
 
 Aplicación interna para las reuniones de venta 2027 y la reconfirmación de clubes en
-enero-febrero de 2027. Reemplaza al prototipo AppSheet: **no depende de Google Sheets,
-de AppSheet ni de ningún servicio de terceros.**
+enero-febrero de 2027. Reemplaza al prototipo AppSheet: **no depende de Google Sheets
+ni de AppSheet.** El único servicio de terceros es optativo: el ingreso con Google por
+Firebase (sin sus variables, el botón no aparece).
 
-Trabaja con los clubes reales de la planilla de venta. Se entra con un enlace de un solo
-uso; la aplicación no manda correos: el enlace lo reparte Dirección. Sin publicación, sin
+Trabaja con los clubes reales de la planilla de venta. Se entra con correo y contraseña,
+con Google o con un enlace de un solo uso; quien se registra solo queda pendiente hasta
+que Dirección lo aprueba. La aplicación no manda correos: los enlaces los reparte Dirección. Sin publicación, sin
 invitaciones y sin envíos de ningún tipo.
 
 ## Cómo ejecutarla
@@ -102,7 +104,15 @@ tiene un error, **no se aplica ninguna**; una fila en blanco deja al club como e
 
 ### Cómo se entra
 
-No hay contraseñas. Se entra con un **enlace de un solo uso** que vence a los 15 minutos.
+Tres formas, en la pantalla de acceso (`/sesion`):
+
+- **Correo y contraseña.** Quien no tiene cuenta la crea en `/registrarse` y queda
+  pendiente: Dirección la aprueba en **Administración → Solicitudes de acceso** eligiendo
+  el rol. Quien ya estaba cargado crea su contraseña desde **Mi cuenta** (clic en su nombre).
+- **Google**, si están las variables `FUTSALA_FIREBASE_API_KEY`, `FUTSALA_FIREBASE_AUTH_DOMAIN`,
+  `FUTSALA_FIREBASE_PROJECT_ID` y `FUTSALA_FIREBASE_APP_ID` (van en `.env`). El dominio
+  tiene que estar en Firebase → Authentication → Settings → Authorized domains.
+- **Enlace de un solo uso** que vence a los 15 minutos, para recuperar el acceso.
 
 ```bash
 npm run acceso                       # lista a quién se le puede generar
